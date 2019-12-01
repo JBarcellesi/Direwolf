@@ -1,0 +1,18 @@
+FirstName: Jacopo
+LastName: Barcellesi
+MatriculationNumber: 213544
+AcademicYear: 2019-2020
+GitHubUrl: YourGithubRepositoryURL
+Subnets:
+  HostsA:
+    RequiredAddresses: 145
+    SubnetAddress: YourHostsASubnetAddress
+    SubnetPrefixLength: YourHostsASubnetPrefixLength
+  HostsB:
+    RequiredAddresses: 401
+    SubnetAddress: YourHostsBSubnetAddress
+    SubnetPrefixLength: YourHostsBSubnetPrefixLength
+  Hub:
+    RequiredAddresses: 79
+    SubnetAddress: YourHubSubnetAddress
+    SubnetPrefixLength: YourHubSubnetPrefixLength
