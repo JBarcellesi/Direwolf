@@ -126,14 +126,14 @@ My implementation of this assignment is composed by four subnets:
         That is why I needed to implement a system of VLANs, since Host-a and Host-b have to stay on different nets. The tag for Host-b VLAN is 8.
         -S3 hosts Host-c, the net address is 191.0.0.0/25, so the netmask is 255.255.255.127 since the number of hosts to contain is 79, 7 bits are needed (2^7=128).
         Two are the IP addresses assigned, 191.0.0.10 fo Host-c and 191.0.0.11 for Router-1, the gateway of the net. Since on Router-2 just one net is attached, there is no need to implement VLANs here.
-        -S4 is the last subnets and it has been created just to link Router-1 and Router-2. Bits necessary are a two, because there are only two "users" in the net (the routers), so just two IP address for them, then one for the net and one for the broadcast service. So the net address is 193.0.0.0/30 and the netmask is 255.255.255.252. Router-1 has the address 193.0.0.1 and Router-2 has 193.0.0.2.
+        -S4 is the last subnets and it has been created just to link Router-1 and Router-2. Two bits are necessary, because there are only two "users" in the net (the routers), so just two IP address for them, then one for the net and one for the broadcast service. So the net address is 193.0.0.0/30 and the netmask is 255.255.255.252. Router-1 has the address 193.0.0.1 and Router-2 has 193.0.0.2.
 
 I modified the Vagrant file, every virtual machine now has its own script based on what kind of device is running. So it recalls 6 bash files with the commands for every router, switch or host present in the network. In every script there are commands for pure Linux software part to update their machines and also the creation of interfaces and their power on. Exept for the Switch one, the interfaces have also an IP address to get them reachable through the network.
 Here I paste an example of it from Host-b script:
         sudo ip addr add 190.0.2.22/23 dev enp0s8
         sudo ip link set enp0s8 up
 
-In particular, the hosts' scripts contain just those commands and one more (execpt for the host-c one, but I will talk about it later): the command that sets the default gateway. That is done to force hosts to send packets at the router of their competence directly to it (or through the switch), instead of going through the management interface, that uses the system IP address. An example is in Host-a script:
+In particular, the hosts' scripts contain just those commands and one more (execpt for the host-c one, but I will talk about it later): the command that sets the default gateway. That is done to force hosts to send packets directly to the router of their competence (or through the switch), instead of going through the management interface, that uses the system IP address. An example is in Host-a script:
         sudo ip route add default via 190.0.0.24 
 
 For what concerns Host-c, the only difference is that this one has to contain a Docker container that runs a ngnix web server on it, as told by the assignment. To manage this, more commands are necessary to install the proper tools and software and then the one to run the service:
