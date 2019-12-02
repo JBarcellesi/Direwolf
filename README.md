@@ -124,7 +124,7 @@ My implementation of this assignment is composed by four subnets:
         -S2 hosts Host-b, the net address is 190.0.2.0/23, so the netmask is 255.255.254.0 bacause it has to contain 401 hosts, so 9 bits are needed (2^9=512).
         As S1, also S2 has two IP addresses assigned, 190.0.2.22 for Host-b and 190.0.2.21 for Router-1, which is the default gateway for S2, the same as S1.
         That is why I needed to implement a system of VLANs, since Host-a and Host-b have to stay on different nets. The tag for Host-b VLAN is 8.
-        -S3 hosts Host-c, the net address is 191.0.0.0/25, so the netmask is 255.255.255.128 since the number of hosts to contain is 79, 7 bits are needed (2^7=128).
+        -S3 hosts Host-c, the net address is 191.0.0.0/25, so the netmask is 255.255.255.127 since the number of hosts to contain is 79, 7 bits are needed (2^7=128).
         Two are the IP addresses assigned, 191.0.0.10 fo Host-c and 191.0.0.11 for Router-1, the gateway of the net. Since on Router-2 just one net is attached, there is no need to implement VLANs here.
         -S4 is the last subnets and it has been created just to link Router-1 and Router-2. Bits necessary are a two, because there are only two "users" in the net (the routers), so just two IP address for them, then one for the net and one for the broadcast service. So the net address is 193.0.0.0/30 and the netmask is 255.255.255.252. Router-1 has the address 193.0.0.1 and Router-2 has 193.0.0.2.
 
