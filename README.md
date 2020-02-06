@@ -117,6 +117,7 @@ The assignment deliverable consists of a Github repository containing:
 
 
 # Design
+## Table of Contents
 My implementation of this assignment is composed by four subnets:
         -S1 hosts Host-a, the net address is 190.0.0.0/24, so the netmask is 255.255.255.0 because it has to contain 145 hosts, so 8 bits are needed (2^8=256).
         For this subnet two IP addresses are assigned: 190.0.0.25 for Host-a and 190.0.0.24 for Router-1, which is the default gateway for S1.
