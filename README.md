@@ -119,6 +119,7 @@ The assignment deliverable consists of a Github repository containing:
 # Design
 ## Table of Contents
 1. [Technical Configuration](#Technical-Configuration)
+    * [Vagrantfile](#Vagrantfile)
     * [Subnets](#Subnets)
     * [VLAN](#VLAN)
     * [Interfaces Mapping](#Interfaces-Mapping)
