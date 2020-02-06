@@ -118,11 +118,11 @@ The assignment deliverable consists of a Github repository containing:
 
 # Design
 ## Table of Contents
-1. [Technical Configuration](#Technical Configuration)
+1. [Technical Configuration](#Technical-Configuration)
         - [Subnets](#Subnets)
         - [VLAN](#VLAN)
-        - [Interfaces Mapping](#Interfaces Mapping)
-        - [Network Map](#Network Map)
+        - [Interfaces Mapping](#Interfaces-Mapping)
+        - [Network Map](#Network-Map)
 2. [Implementation](#Implementation)
         - [Router-1](#Router-1)
         - [Router-2](#Router-2)
@@ -131,8 +131,8 @@ The assignment deliverable consists of a Github repository containing:
         - [Host-b](#Host-b)
         - [Host-c](#Host-c)
         
-3. [Assignement Execution and Results](#Assignement Execution and Results)
-4. [Examples of Bad Configuration](#Examples of Bad Configuration)
+3. [Assignement Execution and Results](#Assignement-Execution-and-Results)
+4. [Examples of Bad Configuration](#Examples-of-Bad-Configuration)
 
 
 ### Technical Configuration
