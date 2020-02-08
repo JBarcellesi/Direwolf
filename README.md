@@ -118,13 +118,13 @@ The assignment deliverable consists of a Github repository containing:
 
 # Design
 ## Table of Contents
-1. [Technical Configuration](#Technical-Configuration)
-    * [Vagrantfile](#Vagrantfile)
+1. [Technical Configuration](#Technical-Configuration)    
     * [Subnets](#Subnets)
     * [VLAN](#VLAN)
     * [Interfaces Mapping](#Interfaces-Mapping)
     * [Network Map](#Network-Map)
 2. [Implementation](#Implementation)
+    * [Vagrantfile](#Vagrantfile)
     * [router-1](#router-1)
     * [router-2](#router-2)
     * [switch](#switch)
@@ -138,6 +138,8 @@ The assignment deliverable consists of a Github repository containing:
 
 ### Technical Configuration
 #### Subnets
+To implement the assignement, four subents are needed, one for each host linked to their router of reference and one to link routers together:
+**1** S1 is the subnet for host-a between it and router-1. This subnet has to contain at most 145 hosts, so it needs 8 bits for hosts IP addresses (2<sup>8=256). This means that remains 24 bits for network IP address
 #### VLAN
 #### Interfaces Mapping
 #### Network Map
@@ -146,10 +148,10 @@ The assignment deliverable consists of a Github repository containing:
 
         +------------------------------------------------------------------+
         |                                                                  |
-        |                                                                  |eth0
+        |                                                                  |enp0s3
         +--+--+                +------------+                       +------------+
         |     |                |            |                       |            |
-        |     |            eth0|            |enp0s9           enp0s9|            |
+        |     |          enp0s3|            |enp0s9           enp0s9|            |
         |     +----------------+  router-1  +-----------------------+  router-2  |
         |     |                |            |193.0.0.1     193.0.0.2|            |
         |     |                |            |                       |            |
@@ -160,22 +162,22 @@ The assignment deliverable consists of a Github repository containing:
         |  G  |                      ||                              +-----+----+
         |  E  |                      ||enp0s8                        |          |
         |  M  |            +-------------------+                     |          |
-        |  E  |        eth0|                   |                     |  host-c  |
+        |  E  |      enp0s3|                   |                     |  host-c  |
         |  N  +------------+      SWITCH       |                     |          |
         |  T  |            |                   |                     |          |
         |     |            +-------------------+                     +----------+
-        |  V  |         enp0s9|             |enp0s10                       |eth0
+        |  V  |         enp0s9|             |enp0s10                       |enp0s3
         |  A  |               |             |                              |
         |  G  |               |             |                              |
         |  R  |     190.0.0.25|enp0s8 enp0s8|190.0.2.22                    |
         |  A  |        +----------+     +----------+                       |
         |  N  |        |          |     |          |                       |
-        |  T  |    eth0|          |     |          |                       |
+        |  T  |  enp0s3|          |     |          |                       |
         |     +--------+  host-a  |     |  host-b  |                       |
         |     |        |          |     |          |                       |
         |     |        |          |     |          |                       |
         ++-+--+        +----------+     +----------+                       |
-        | |                              |eth0                             |
+        | |                              |enp0s3                           |
         | |                              |                                 |
         | +------------------------------+                                 |
         |                                                                  |
@@ -187,6 +189,7 @@ The assignment deliverable consists of a Github repository containing:
 ```
 
 ### Implementation
+#### Vagrantfile
 #### Router-1
 #### Router-2
 #### Switch
