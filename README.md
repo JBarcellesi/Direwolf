@@ -140,13 +140,13 @@ The assignment deliverable consists of a Github repository containing:
 #### Subnets
 To implement the assignement, four subents are needed, one for each host linked to their router of reference and one to link routers together:
 
-**1** S1 is the subnet for host-a between it and router-1. This subnet has to contain at least 145 hosts, so it needs 8 bits for hosts IP addresses (2<sup>8</sup>=256). This means that 24 bits remain for network IP address, so the netmask of the subnet is 255.255.255.0 and the IP network address chosen is 190.0.0.0/24.
+**1**) S1 is the subnet for host-a between it and router-1. This subnet has to contain at least 145 hosts, so it needs 8 bits for hosts IP addresses (2<sup>8</sup>=256). This means that 24 bits remain for network IP address, so the netmask of the subnet is 255.255.255.0 and the IP network address chosen is 190.0.0.0/24.
 
-**2** S2 is the subnet that contains host-b and is associated to router-1. The requirement says that thie subnet of host-b has to contain at least 401 hosts, hence 9 bits are needed for hosts IP addresses (2<sup>9</sup>=512). For this reason, the netmask of the subnet is composed by 23 bits and it is 255.255.254.0 with a subnet IP address that is 190.0.2.0/23.
+**2**) S2 is the subnet that contains host-b and is associated to router-1. The requirement says that thie subnet of host-b has to contain at least 401 hosts, hence 9 bits are needed for hosts IP addresses (2<sup>9</sup>=512). For this reason, the netmask of the subnet is composed by 23 bits and it is 255.255.254.0 with a subnet IP address that is 190.0.2.0/23.
 
-**3** S3 is the subnet where host-c stays provided by router-2. It has to contain just 79 hosts as the assignement requires, so needs 7 bits for hosts IP adresses (2<sup>7</sup>=128) generating a netmask that is 255.255.255.128 since 25 bits remain for subnet IP adress that is 191.0.0.0/25.
+**3**) S3 is the subnet where host-c stays provided by router-2. It has to contain just 79 hosts as the assignement requires, so needs 7 bits for hosts IP adresses (2<sup>7</sup>=128) generating a netmask that is 255.255.255.128 since 25 bits remain for subnet IP adress that is 191.0.0.0/25.
 
-**4** S4 is the last subnet in the project but is the most important, because links ruoter-1 and router-2 and without it is not possible to send packets from host-a or host-b to host-c and viceversa. Since the subnet has just to provide a connection between routers, 2 bits are enough for hosts IP adresses (2 hosts that are routers, one adress for broadcast service and one for the network). The netmask is 255.255.255.252 and the subnet IP adress is 193.0.0.0/30.
+**4**) S4 is the last subnet in the project but is the most important, because links ruoter-1 and router-2 and without it is not possible to send packets from host-a or host-b to host-c and viceversa. Since the subnet has just to provide a connection between routers, 2 bits are enough for hosts IP adresses (2 hosts that are routers, one adress for broadcast service and one for the network). The netmask is 255.255.255.252 and the subnet IP adress is 193.0.0.0/30.
 #### VLAN
 #### Interfaces Mapping
 #### Network Map
