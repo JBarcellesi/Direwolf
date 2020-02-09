@@ -139,7 +139,7 @@ The assignment deliverable consists of a Github repository containing:
 ### Technical Configuration
 #### Subnets
 To implement the assignement, four subents are needed, one for each host linked to their router of reference and one to link routers together:
-**1** S1 is the subnet for host-a between it and router-1. This subnet has to contain at most 145 hosts, so it needs 8 bits for hosts IP addresses (2<sup>8=256). This means that remains 24 bits for network IP address
+**1** S1 is the subnet for host-a between it and router-1. This subnet has to contain at least 145 hosts, so it needs 8 bits for hosts IP addresses (2<sup>8</sup>=256). This means that 24 bits remain for network IP address, so the netmask of the subnet is 255.255.255.0 and the IP network address chosen is 190.0.0.0/24.
 #### VLAN
 #### Interfaces Mapping
 #### Network Map
