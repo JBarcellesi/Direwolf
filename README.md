@@ -215,7 +215,7 @@ As required in the assignement, the traffic from and to host-a has to be indipen
 | -      | 10     | switch   | enp0s9    | -             |
 | -      | 8      | switch   | enp0s10   | -             | 
 
-_Note_: IP addresses, VLANs tags and subnets addresses are not chosen with a kind of logic, they are just important number for the author
+_Note_: IP addresses, VLANs tags and subnets addresses are not chosen with a kind of logic, they are just important numbers for the author
 
 
 ### Implementation
