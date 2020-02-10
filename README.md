@@ -137,15 +137,15 @@ The assignment deliverable consists of a Github repository containing:
 
 ### Technical Configuration
 #### Subnets
-To implement the assignement, four subents are needed, one for each host linked to their router of reference and one to link routers together:
+To implement the assignement, four subents are needed, one for each host linked to its router of reference and one to link routers together:
 
 **1**) S1 is the subnet for host-a between it and router-1. This subnet has to contain at least 145 hosts, so it needs 8 bits for hosts IP addresses (2<sup>8</sup>=256). This means that 24 bits remain for network IP address, so the netmask of the subnet is 255.255.255.0 and the IP network address chosen is 190.0.0.0/24.
 
-**2**) S2 is the subnet that contains host-b and is associated to router-1. The requirement says that thie subnet of host-b has to contain at least 401 hosts, hence 9 bits are needed for hosts IP addresses (2<sup>9</sup>=512). For this reason, the netmask of the subnet is composed by 23 bits and it is 255.255.254.0 with a subnet IP address that is 190.0.2.0/23.
+**2**) S2 is the subnet that contains host-b and it is associated to router-1. The requirement says that the subnet of host-b has to contain at least 401 hosts, hence 9 bits are needed for hosts IP addresses (2<sup>9</sup>=512). For this reason, the netmask of the subnet is composed by 23 bits and it is 255.255.254.0 with a subnet IP address that is 190.0.2.0/23.
 
-**3**) S3 is the subnet where host-c stays provided by router-2. It has to contain just 79 hosts as the assignement requires, so needs 7 bits for hosts IP adresses (2<sup>7</sup>=128) generating a netmask that is 255.255.255.128 since 25 bits remain for subnet IP adress that is 191.0.0.0/25.
+**3**) S3 is the subnet where host-c stays, provided by router-2. It has to contain just 79 hosts as the assignement requires, so it needs 7 bits for hosts IP addresses (2<sup>7</sup>=128) generating a netmask that is 255.255.255.128 since 25 bits remain for subnet IP adress that is 191.0.0.0/25.
 
-**4**) S4 is the last subnet in the project but is the most important, because links ruoter-1 and router-2 and without it is not possible to send packets from host-a or host-b to host-c and viceversa. Since the subnet has just to provide a connection between routers, 2 bits are enough for hosts IP adresses (2 hosts that are routers, one adress for broadcast service and one for the network). The netmask is 255.255.255.252 and the subnet IP adress is 193.0.0.0/30.
+**4**) S4 is the last subnet in the project but is the most important, because it links ruoter-1 and router-2 and, without it, is not possible to send packets from host-a or host-b to host-c and viceversa. Since the subnet has just to provide a connection between routers, 2 bits are enough for hosts IP addresses (2 hosts that are routers, one address for broadcast service and one for the network). The netmask is 255.255.255.252 and the subnet IP adress is 193.0.0.0/30.
 
 #### VLAN
 As required in the assignement, the traffic from and to host-a has to be indipendent of traffic from and to host-b. To allow this operation, VLANs are needed, one for S1 and one for S2. For S1-VLAN the identification tag is 10 and for S2-VLAN is 8. To implement the VLANs, it is necessary "to split" the interface from router-1 towards the switch that provides virtual networks, adding the indentification VLAN tag at the router interface.
@@ -215,6 +215,8 @@ As required in the assignement, the traffic from and to host-a has to be indipen
 | -      | 10     | switch   | enp0s9    | -             |
 | -      | 8      | switch   | enp0s10   | -             | 
 
+_Note_: IP addresses, VLANs tags and subnets addresses are not chosen with a kind of logic, they are just important number for the author
+
 
 ### Implementation
 #### Vagrantfile
@@ -227,19 +229,6 @@ As required in the assignement, the traffic from and to host-a has to be indipen
 
 ### Assignement Execution and Results
 ### Examples of Bad Configuration
-
-
-
-My implementation of this assignment is composed by four subnets:
-        -S1 hosts Host-a, the net address is 190.0.0.0/24, so the netmask is 255.255.255.0 because it has to contain 145 hosts, so 8 bits are needed (2^8=256).
-        For this subnet two IP addresses are assigned: 190.0.0.25 for Host-a and 190.0.0.24 for Router-1, which is the default gateway for S1.
-        S1 has also a VLAN implmented, as required from the assignment, whose tag is 10.
-        -S2 hosts Host-b, the net address is 190.0.2.0/23, so the netmask is 255.255.254.0 bacause it has to contain 401 hosts, so 9 bits are needed (2^9=512).
-        As S1, also S2 has two IP addresses assigned, 190.0.2.22 for Host-b and 190.0.2.21 for Router-1, which is the default gateway for S2, the same as S1.
-        That is why I needed to implement a system of VLANs, since Host-a and Host-b have to stay on different nets. The tag for Host-b VLAN is 8.
-        -S3 hosts Host-c, the net address is 191.0.0.0/25, so the netmask is 255.255.255.127 since the number of hosts to contain is 79, 7 bits are needed (2^7=128).
-        Two are the IP addresses assigned, 191.0.0.10 fo Host-c and 191.0.0.11 for Router-1, the gateway of the net. Since on Router-2 just one net is attached, there is no need to implement VLANs here.
-        -S4 is the last subnets and it has been created just to link Router-1 and Router-2. Two bits are necessary, because there are only two "users" in the net (the routers), so just two IP address for them, then one for the net and one for the broadcast service. So the net address is 193.0.0.0/30 and the netmask is 255.255.255.252. Router-1 has the address 193.0.0.1 and Router-2 has 193.0.0.2.
 
 I modified the Vagrant file, every virtual machine now has its own script based on what kind of device is running. So it recalls 6 bash files with the commands for every router, switch or host present in the network. In every script there are commands for pure Linux software part to update their machines and also the creation of interfaces and their power on. Exept for the Switch one, the interfaces have also an IP address to get them reachable through the network.
 Here I paste an example of it from Host-b script:
