@@ -121,7 +121,6 @@ The assignment deliverable consists of a Github repository containing:
 1. [Technical Configuration](#Technical-Configuration)    
     * [Subnets](#Subnets)
     * [VLAN](#VLAN)
-    * [Interfaces Mapping](#Interfaces-Mapping)
     * [Network Map](#Network-Map)
 2. [Implementation](#Implementation)
     * [Vagrantfile](#Vagrantfile)
@@ -156,7 +155,6 @@ As required in the assignement, the traffic from and to host-a has to be indipen
 |   S1   |    10   |    enp0s8.10     |
 |   S2   |    8    |    enp0s8.8      |
 
-#### Interfaces Mapping
 #### Network Map
 ```
 
@@ -202,6 +200,21 @@ As required in the assignement, the traffic from and to host-a has to be indipen
 
 
 ```
+
+| Subnet | VLAN   | Device   | Interface | IP address    |
+|------- | ------ | -------- | --------- | ------------- |
+| S1     | 10     | host-a   | enp0s8    | 190.0.0.25/24 |
+| S1     | 10     | router-1 | enp0s8.10 | 190.0.0.24/24 |
+| S2     | 8      | host-b   | enp0s8    | 190.0.2.22/23 |
+| S2     | 8      | router-2 | enp0s8.8  | 190.0.2.21/23 |
+| S3     | -      | host-c   | enp0s8    | 191.0.0.10/25 |
+| S3     | -      | router-2 | enp0s8    | 191.0.0.11/25 |
+| S4     | -      | router-1 | enp0s9    | 193.0.0.1/30  |
+| S4     | -      | router-2 | enp0s9    | 193.0.0.2/30  |
+| -      | 10 - 8 | switch   | enp0s8    | -             |
+| -      | 10     | switch   | enp0s9    | -             |
+| -      | 8      | switch   | enp0s10   | -             | 
+
 
 ### Implementation
 #### Vagrantfile
