@@ -219,7 +219,38 @@ _Note_: IP addresses, VLANs tags and subnets addresses are not chosen with a kin
 
 
 ### Implementation
+In order to make the project work, an ad-hoc script has to be written for each device in the network, since they have to be configured in the proper way and one by one because some features cannot be the same between different devices, as IP addresses, default gateways and VLAN tags. In the end, the Vagrantfile has to be modified to guarantee that every device's script is executed.
+
 #### Vagrantfile
+Throrugh the Vagrantfile, the network is build instantiating devices as virtual machines. Here is an example of how this file creates VM setting a name (router-2), the interfaces on that device, the script from which the device takes its features when the network is up (router-2.sh) and the RAM allocated for the machine (256MB).
+
+```
+config.vm.define "router-2" do |router2|
+    router2.vm.box = "ubuntu/bionic64"
+    router2.vm.hostname = "router-2"
+    router2.vm.network "private_network", virtualbox__intnet: "broadcast_router-south-2", auto_config: false
+    router2.vm.network "private_network", virtualbox__intnet: "broadcast_router-inter", auto_config: false
+    router2.vm.provision "shell", path: "router-2.sh"
+    router2.vm.provider "virtualbox" do |vb|
+      vb.memory = 256
+    end
+  end  
+```
+
+This operation in teh Vagrantfile is done for every device in the network and configurations are very similar (just the number of intefaces changes and of course names and source scripts), exept for host-c, which has to run a Docker image in order to provide a web-server on it, so the allocated RAM is doubled (512MB)
+
+```
+config.vm.define "host-c" do |hostc|
+    hostc.vm.box = "ubuntu/bionic64"
+    hostc.vm.hostname = "host-c"
+    hostc.vm.network "private_network", virtualbox__intnet: "broadcast_router-south-2", auto_config: false
+    hostc.vm.provision "shell", path: "host-c.sh"
+    hostc.vm.provider "virtualbox" do |vb|
+      vb.memory = 512
+    end
+  end
+```
+
 #### Router-1
 #### Router-2
 #### Switch
