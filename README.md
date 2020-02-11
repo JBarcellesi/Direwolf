@@ -219,7 +219,9 @@ _Note_: IP addresses, VLANs tags and subnets addresses are not chosen with a kin
 
 
 ### Implementation
-In order to make the project work, an ad-hoc script has to be written for each device in the network, since they have to be configured in the proper way and one by one because some features cannot be the same between different devices, as IP addresses, default gateways and VLAN tags. In the end, the Vagrantfile has to be modified to guarantee that every device's script is executed.
+In order to make the project work, an ad-hoc script has to be written for each device in the network, since they have to be configured in the proper way and one by one because some features cannot be the same between different devices, as IP addresses, default gateways and VLAN tags. For this reason, the Vagrantfile has to be modified to guarantee that every device's script is executed.
+
+It is necessary for every device to turn on interfaces to allow traffic to pass, to give IP addresses for every interface (execpt for the switch that works at level 2 in the ISO/OSI stack, so it does not have an IP address since it is only for level 3 of ISO/OSI stack devices). In addiction, those VMs that act as routers need a command to allow them to route packet becoming worthy of being named "router". Then every host needs a command to ensure them a default gateway and every gateway needs a command that builds a static route (since dynamic routing is not allowed in the project) to reach those subnets that are linked to the other gateway present in the network.  
 
 #### Vagrantfile
 Throrugh the Vagrantfile, the network is build instantiating devices as virtual machines. Here is an example of how this file creates VM setting a name (router-2), the interfaces on that device, the script from which the device takes its features when the network is up (router-2.sh) and the RAM allocated for the machine (256MB).
@@ -264,7 +266,7 @@ sudo apt install -y curl --assume-yes
 sudo ip add add 193.0.0.1/30 dev enp0s9                         #added IP address to the interface
 sudo ip link set enp0s9 up                                      #turned on the interface
 
-#Allow router-1 to route packets
+#Allowed router-1 to route packets
 sudo sysctl net.ipv4.ip_forward=1
 
 #Configuration of sub interfaces for vlans
@@ -281,11 +283,110 @@ sudo ip route add 191.0.0.0/25 via 193.0.0.2 dev enp0s9
 ```
 
 #### Router-2
-#### Switch
-#### Host-a
-#### Host-b
-#### Host-c
+```
+export DEBIAN_FRONTEND=noninteractive
 
+#Commands for router-2 software
+sudo apt-get update
+sudo apt-get install -y tcpdump --assume-yes
+sudo apt install -y curl --assume-yes
+
+#Configuration of interface towards router-1
+sudo ip addr add 193.0.0.2/30 dev enp0s9
+sudo ip link set enp0s9 up
+
+#Configuration of interface towards host-c
+sudo ip addr add 191.0.0.11/25 dev enp0s8
+sudo ip link set enp0s8 up
+
+#Allow ruoter-2 to route packets
+sudo sysctl net.ipv4.ip_forward=1
+
+#Configuration static route for subnet of host-a and host-b
+sudo ip route add 190.0.0.0/22 via 193.0.0.1 dev enp0s9
+```
+#### Switch
+```export DEBIAN_FRONTEND=noninteractive
+
+#Commands for switch's software
+apt-get update
+apt-get install -y tcpdump
+apt-get install -y openvswitch-common openvswitch-switch apt-transport-https ca-certificates curl software-properties-common
+
+#Configuration of switch ports
+sudo ovs-vsctl add-br switch
+sudo ovs-vsctl add-port switch enp0s8
+sudo ovs-vsctl add-port switch enp0s9
+sudo ovs-vsctl add-port switch enp0s10
+sudo ip link set enp0s8 up
+sudo ip link set enp0s9 up
+sudo ip link set enp0s10 up
+
+#Configuration of VLANs
+sudo su
+ovs-vsctl set port enp0s9 tag=10
+ovs-vsctl set port enp0s10 tag=8
+ovs-vsctl set port enp0s8 trunks=8,10
+exit
+```
+#### Host-a
+```
+export DEBIAN_FRONTEND=noninteractive
+
+#Commands for host-a software
+sudo apt-get update
+sudo apt-get install -y tcpdump --assume-yes
+sudo apt install -y curl --assume-yes
+
+#Confugation of host interface
+sudo ip addr add 190.0.0.25/24 dev enp0s8
+sudo ip link set enp0s8 up
+
+#Setup default gateway
+sudo ip route add default via 190.0.0.24
+```
+#### Host-b
+```
+export DEBIAN_FRONTEND=noninteractive
+
+#Commands for host-c software
+sudo apt-get update
+sudo apt-get install -y tcpdump --assume-yes
+sudo apt install -y curl --assume-yes
+
+#Configuration of host interface
+sudo ip addr add 190.0.2.22/23 dev enp0s8
+sudo ip link set enp0s8 up
+
+#Setup default gateway
+sudo ip route add default via 190.0.2.21
+```
+#### Host-c
+```
+export DEBIAN_FRONTEND=noninteractive
+
+#Commands for host-c software
+sudo apt-get update
+sudo apt-get install -y tcpdump --assume-yes
+
+#Command for running a Docker container on host-c
+sudo apt install -y curl --assume-yes
+sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common --assume-yes
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+sudo apt-key fingerprint 0EBFCD88 | grep docker@docker.com || exit 1
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+sudo apt-get update
+sudo apt-get install -y docker-ce --assume-yes
+sudo docker run --name Liz -p 80:80 -d dustnic82/nginx-test
+
+#Configuration of host interface
+sudo ip addr add 191.0.0.10/25 dev enp0s8
+sudo ip link set enp0s8 up
+
+
+#Setup default gateway
+sudo ip route add default via 191.0.0.11
+```
 
 ### Assignement Execution and Results
 ### Examples of Bad Configuration
