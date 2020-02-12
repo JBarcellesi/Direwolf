@@ -221,7 +221,9 @@ _Note_: IP addresses, VLANs tags and subnets addresses are not chosen with a kin
 ### Implementation
 In order to make the project work, an ad-hoc script has to be written for each device in the network, since they have to be configured in the proper way and one by one because some features cannot be the same between different devices, as IP addresses, default gateways and VLAN tags. For this reason, the Vagrantfile has to be modified to guarantee that every device's script is executed.
 
-It is necessary for every device to turn on interfaces to allow traffic to pass, to give IP addresses for every interface (execpt for the switch that works at level 2 in the ISO/OSI stack, so it does not have an IP address since it is only for level 3 of ISO/OSI stack devices). In addiction, those VMs that act as routers need a command to allow them to route packet becoming worthy of being named "router". Then every host needs a command to ensure them a default gateway and every gateway needs a command that builds a static route (since dynamic routing is not allowed in the project) to reach those subnets that are linked to the other gateway present in the network.  
+It is necessary for every device to turn on interfaces in order to allow traffic to pass, to give IP addresses for every interface (execpt for the switch that works at level 2 in the ISO/OSI stack, so it does not have an IP address since it is only for level 3 of ISO/OSI stack devices). In addiction, those VMs that act as routers need a command to allow them to route packet becoming worthy of being named "router". Then every host needs a command to ensure them a default gateway and every gateway needs a command that builds a static route (since dynamic routing is not allowed in the project) to reach those subnets that are linked to the other gateway present in the network. To reduce the number of commands required, only one instruction has been written in router-2 merging together network IP addresses of S1 and S2.
+
+Special commands are required for host-c because it has to run a nginx web server. This is one of the two differences between host-c and the others hosts. The other is that host-a and host-b are connected to the same router (router-1), but they interface with a switch that keeps them on two different VLANs. Hence, in this part of the network there is the need to configure a "trunk" port from switch towards router-1 that can keep to it the traffic from host-a and host-b keeping them on two differents VLANs. In response, router-1 has to have the interface towards the swtich splitted, one part with the tag of host-a VLAN and IP compatible with the host-a subnet,and one part with same things but related to host-b. In script of router-1 and switch, commands to do these operations have a comment to highlight them. 
 
 #### Vagrantfile
 Throrugh the Vagrantfile, the network is build instantiating devices as virtual machines. Here is an example of how this file creates VM setting a name (router-2), the interfaces on that device, the script from which the device takes its features when the network is up (router-2.sh) and the RAM allocated for the machine (256MB).
@@ -239,7 +241,7 @@ config.vm.define "router-2" do |router2|
   end  
 ```
 
-This operation in teh Vagrantfile is done for every device in the network and configurations are very similar (just the number of intefaces changes and of course names and source scripts), exept for host-c, which has to run a Docker image in order to provide a web-server on it, so the allocated RAM is doubled (512MB)
+This operation in the Vagrantfile is done for every device in the network and configurations are very similar (just the number of intefaces changes and of course names and source scripts), exept for host-c, which has to run a Docker image in order to provide a web-server on it, so the allocated RAM is doubled (512MB)
 
 ```
 config.vm.define "host-c" do |hostc|
@@ -299,11 +301,11 @@ sudo ip link set enp0s9 up
 sudo ip addr add 191.0.0.11/25 dev enp0s8
 sudo ip link set enp0s8 up
 
-#Allow ruoter-2 to route packets
+#Allowed ruoter-2 to route packets
 sudo sysctl net.ipv4.ip_forward=1
 
 #Configuration static route for subnet of host-a and host-b
-sudo ip route add 190.0.0.0/22 via 193.0.0.1 dev enp0s9
+sudo ip route add 190.0.0.0/22 via 193.0.0.1 dev enp0s9         #just one instruction referring to a bigger address that can contain S1 and S2
 ```
 #### Switch
 ```export DEBIAN_FRONTEND=noninteractive
@@ -314,8 +316,8 @@ apt-get install -y tcpdump
 apt-get install -y openvswitch-common openvswitch-switch apt-transport-https ca-certificates curl software-properties-common
 
 #Configuration of switch ports
-sudo ovs-vsctl add-br switch
-sudo ovs-vsctl add-port switch enp0s8
+sudo ovs-vsctl add-br switch                    #made the device as a bridge called "switch"                  
+sudo ovs-vsctl add-port switch enp0s8                     
 sudo ovs-vsctl add-port switch enp0s9
 sudo ovs-vsctl add-port switch enp0s10
 sudo ip link set enp0s8 up
@@ -323,11 +325,11 @@ sudo ip link set enp0s9 up
 sudo ip link set enp0s10 up
 
 #Configuration of VLANs
-sudo su
-ovs-vsctl set port enp0s9 tag=10
-ovs-vsctl set port enp0s10 tag=8
-ovs-vsctl set port enp0s8 trunks=8,10
-exit
+sudo su                                         #command to enter in supervisor modality
+ovs-vsctl set port enp0s9 tag=10                #set the tag of VLAN on S1
+ovs-vsctl set port enp0s10 tag=8                #set the tag of VLAN on S2
+ovs-vsctl set port enp0s8 trunks=8,10           #set the port towards router-1 as trunk one
+exit                                            #end of supervisor modality
 ```
 #### Host-a
 ```
@@ -343,7 +345,7 @@ sudo ip addr add 190.0.0.25/24 dev enp0s8
 sudo ip link set enp0s8 up
 
 #Setup default gateway
-sudo ip route add default via 190.0.0.24
+sudo ip route add default via 190.0.0.24        #default gateway set on IP address of router-1 for S1
 ```
 #### Host-b
 ```
@@ -359,7 +361,7 @@ sudo ip addr add 190.0.2.22/23 dev enp0s8
 sudo ip link set enp0s8 up
 
 #Setup default gateway
-sudo ip route add default via 190.0.2.21
+sudo ip route add default via 190.0.2.21        #default gateway set on IP address of router-1 for S2
 ```
 #### Host-c
 ```
@@ -369,7 +371,7 @@ export DEBIAN_FRONTEND=noninteractive
 sudo apt-get update
 sudo apt-get install -y tcpdump --assume-yes
 
-#Command for running a Docker container on host-c
+#Commands for running a Docker container on host-c
 sudo apt install -y curl --assume-yes
 sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common --assume-yes
 sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
@@ -382,7 +384,6 @@ sudo docker run --name Liz -p 80:80 -d dustnic82/nginx-test
 #Configuration of host interface
 sudo ip addr add 191.0.0.10/25 dev enp0s8
 sudo ip link set enp0s8 up
-
 
 #Setup default gateway
 sudo ip route add default via 191.0.0.11
