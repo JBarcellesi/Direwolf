@@ -469,6 +469,7 @@ vagrant@host-a:~$ ip route
 default via 190.0.0.24 dev enp0s8
 ```
 
+<b> NOTE </b>
 #### Switch with VLAN
 #### Router with VLAN
 
