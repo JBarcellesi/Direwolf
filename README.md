@@ -469,9 +469,92 @@ vagrant@host-a:~$ ip route
 default via 190.0.0.24 dev enp0s8
 ```
 
-<b> NOTE </b>
+<b> NOTE: </b> the operation of assigning IP addresses and switching on interfaces has to be done for every device and on every interface of interest (exept for switch that does not have an IP address)
+
 #### Switch with VLAN
+
 #### Router with VLAN
+Besides the configuration of interfaces and IP addresses already explained, routers need an important instruction that allows to reach those subnets not directly linked to them. In this case, S1 and S2 for router-2 and S3 for router-1. Analyzing router-1 case, with the command
+```
+vagrant@router-1:~$ ip route
+```
+is possible to see that there are no links with S3, which is linked only at router-2 and it has a network address of 191.0.0.0/25
+
+```
+vagrant@router-1:~$ ip route
+default via 10.0.2.2 dev enp0s3 proto dhcp src 10.0.2.15 metric 100
+10.0.2.0/24 dev enp0s3 proto kernel scope link src 10.0.2.15
+10.0.2.2 dev enp0s3 proto dhcp scope link src 10.0.2.15 metric 100
+190.0.0.0/24 dev enp0s8.10 proto kernel scope link src 190.0.0.24
+190.0.2.0/23 dev enp0s8.8 proto kernel scope link src 190.0.2.21
+193.0.0.0/30 dev enp0s9 proto kernel scope link src 193.0.0.1
+```
+But using the command that establishes the static route to reach S3, that is
+```
+vagrant@router-1:~$ sudo ip route add 191.0.0.0/25 via 193.0.0.2 dev enp0s9
+```
+the track for S3 appears in the routing table:
+```
+vagrant@router-1:~$ ip route
+default via 10.0.2.2 dev enp0s3 proto dhcp src 10.0.2.15 metric 100
+10.0.2.0/24 dev enp0s3 proto kernel scope link src 10.0.2.15
+10.0.2.2 dev enp0s3 proto dhcp scope link src 10.0.2.15 metric 100
+190.0.0.0/24 dev enp0s8.10 proto kernel scope link src 190.0.0.24
+190.0.2.0/23 dev enp0s8.8 proto kernel scope link src 190.0.2.21
+191.0.0.0/25 via 193.0.0.2 dev enp0s9
+193.0.0.0/30 dev enp0s9 proto kernel scope link src 193.0.0.1
+```
+In the project, an unique instruction has been used to set the static route for S1 and S2 on router-2 merging together the subnets: this is called route aggregation.
+```
+sudo ip route add 190.0.0.0/22 via 193.0.0.1 dev enp0s9
+```
+This is possible because the network 190.0.0.0/22 has 10 bits for host addressing that menas a range of addresses that goes from 190.0.0.0 to 190.0.3.255 that includes S1 (190.0.0.0/24) and S2 (190.0.2.0/23).
+
+Other imporant things to set up on router-1 are interfaces towards host-a and host-b, so towards switch. Since the switch provides two different VLANs but router-1 has just one interface for switch, there is the need of a solution. The solution is to split the interface by VLANs' tags: this tags must be added at the interface's name. Once this is done, the interface with the tag "10" will hadle just the traffic coming from VLAN "10", and the same will do the interface with tag "8" with the traffic from the correspective interface.
+Commands above descripted are:
+```
+sudo ip link add link enp0s8 name enp0s8.10 type vlan id 10
+sudo ip add add 190.0.0.24/24 dev enp0s8.10
+sudo ip link set enp0s8.10 up
+sudo ip link add link enp0s8 name enp0s8.8 type vlan id 8
+sudo ip add add 190.0.2.21/23 dev enp0s8.8
+sudo ip link set enp0s8.8 up
+```
+and the effect on router-1 IP address table is:
+```
+vagrant@router-1:~$ ip add show
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 02:82:7a:7b:51:94 brd ff:ff:ff:ff:ff:ff
+    inet 10.0.2.15/24 brd 10.0.2.255 scope global dynamic enp0s3
+       valid_lft 80259sec preferred_lft 80259sec
+    inet6 fe80::82:7aff:fe7b:5194/64 scope link
+       valid_lft forever preferred_lft forever
+4: enp0s9: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 08:00:27:53:79:80 brd ff:ff:ff:ff:ff:ff
+    inet 193.0.0.1/30 scope global enp0s9
+       valid_lft forever preferred_lft forever
+    inet6 fe80::a00:27ff:fe53:7980/64 scope link
+       valid_lft forever preferred_lft forever
+5: enp0s8.10@enp0s8: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+    link/ether 08:00:27:f6:d3:05 brd ff:ff:ff:ff:ff:ff
+    inet 190.0.0.24/24 scope global enp0s8.10
+       valid_lft forever preferred_lft forever
+    inet6 fe80::a00:27ff:fef6:d305/64 scope link
+       valid_lft forever preferred_lft forever
+6: enp0s8.8@enp0s8: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+    link/ether 08:00:27:f6:d3:05 brd ff:ff:ff:ff:ff:ff
+    inet 190.0.2.21/23 scope global enp0s8.8
+       valid_lft forever preferred_lft forever
+    inet6 fe80::a00:27ff:fef6:d305/64 scope link
+       valid_lft forever preferred_lft forever
+```
+
 
 
 ### Results
