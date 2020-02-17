@@ -131,8 +131,12 @@ The assignment deliverable consists of a Github repository containing:
     * [host-b](#host-b)
     * [host-c](#host-c)
         
-3. [Assignement Execution and Results](#Assignement-Execution-and-Results)
-4. [Examples of Bad Configuration](#Examples-of-Bad-Configuration)
+3. [Assignement Execution](#Assignement-Execution)
+    * [Traditional host](#Traditional-host)
+    * [Switch with VLAN](Switch-with-VLAN)
+    * [Router with VLAN](Router-with-VLAN)
+4. [Results](#Results)
+5. [Examples of Bad Configuration](#Examples-of-Bad-Configuration)
 
 
 ### Technical Configuration
@@ -241,7 +245,7 @@ config.vm.define "router-2" do |router2|
   end  
 ```
 
-This operation in the Vagrantfile is done for every device in the network and configurations are very similar (just the number of intefaces changes and of course names and source scripts), exept for host-c, which has to run a Docker image in order to provide a web-server on it, so the allocated RAM is doubled (512MB)
+This operation in the Vagrantfile is done for every device in the network and configurations are very similar (just the number of intefaces changes and of course names and source scripts), exept for host-c, which has to run a Docker image in order to provide a web-server on it, so the allocated RAM is doubled (512MB).
 
 ```
 config.vm.define "host-c" do |hostc|
@@ -253,6 +257,13 @@ config.vm.define "host-c" do |hostc|
       vb.memory = 512
     end
   end
+```
+The original Vagrantfile has been modified and now it recalls scripts for every device in the network and not the "common.sh" script that was recalling when the project was blind.
+If there is the need to do some modifies once that the network is up, it is possible to connect at every device in the network by a SSH connection in this way:
+```
+vagrant ssh #name-of-the-device
+
+e.g. vagrant ssh host-a
 ```
 
 #### Router-1
@@ -389,7 +400,80 @@ sudo ip link set enp0s8 up
 sudo ip route add default via 191.0.0.11
 ```
 
-### Assignement Execution and Results
+Of course, host-c needs more instructions than other hosts. This is due to the installation of the Docker image that requires some code lines. Is possible to see those in the script above, where first seven rows are for installation of certificates and access to repository where Docker image is stored, and the last one is the one that makes that particular ngninx server run.
+
+### Assignement Execution
+#### Traditional host
+Is not particularly tricky to configure a host in this network. It just needs three actions: a valid IP address associated with the interface towards its competence router, to swtich on that interface and, in the end, a command that set the default gateway. Before doing these operations, it is possible to see that the interface's table is withuot an IP address on the interest interface and that it is off with the command:
+```
+vagrant@host-a:~$ ip addr show
+```
+And the result shows all interfaces on host-a. In this network, host-a has three interfaces: one with the Vagrant management (enp0s3), one is for the system address (lo) and one for the connection to the router-1 through the switch(enp0s8).
+```
+vagrant@host-a:~$ ip addr show
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 02:82:7a:7b:51:94 brd ff:ff:ff:ff:ff:ff
+    inet 10.0.2.15/24 brd 10.0.2.255 scope global dynamic enp0s3
+       valid_lft 85726sec preferred_lft 85726sec
+    inet6 fe80::82:7aff:fe7b:5194/64 scope link
+       valid_lft forever preferred_lft forever
+3: enp0s8: <BROADCAST,MULTICAST> mtu 1500 qdisc fq_codel state DOWN group default qlen 1000
+    link/ether 08:00:27:dc:84:8a brd ff:ff:ff:ff:ff:ff
+```
+Once IP address is given and interface is turned on through these commands
+```
+vagrant@host-a:~$ sudo ip addr add 190.0.0.25/24 dev enp0s8
+vagrant@host-a:~$ sudo ip link set enp0s8 up
+```
+the interface's table is updated:
+```
+vagrant@host-a:~$ ip add show
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 02:82:7a:7b:51:94 brd ff:ff:ff:ff:ff:ff
+    inet 10.0.2.15/24 brd 10.0.2.255 scope global dynamic enp0s3
+       valid_lft 85264sec preferred_lft 85264sec
+    inet6 fe80::82:7aff:fe7b:5194/64 scope link
+       valid_lft forever preferred_lft forever
+3: enp0s8: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 08:00:27:dc:84:8a brd ff:ff:ff:ff:ff:ff
+    inet 190.0.0.25/24 scope global enp0s8
+       valid_lft forever preferred_lft forever
+    inet6 fe80::a00:27ff:fedc:848a/64 scope link
+       valid_lft forever preferred_lft forever
+```
+
+Now the only thing remained to do is to add the default gateway. The command is
+```
+vagrant@host-a:~$ sudo ip route add default via 190.0.0.24
+```
+and before it, the situation shows a default gateway through the management interface (enp0s3)
+```
+vagrant@host-a:~$ ip route
+default via 10.0.2.2 dev enp0s3 proto dhcp src 10.0.2.15 metric 100
+```
+but after the commnad, the default interface for the traffic has changed into enp0s8
+```
+vagrant@host-a:~$ ip route
+default via 190.0.0.24 dev enp0s8
+```
+
+#### Switch with VLAN
+#### Router with VLAN
+
+
+### Results
 ### Examples of Bad Configuration
 
 I modified the Vagrant file, every virtual machine now has its own script based on what kind of device is running. So it recalls 6 bash files with the commands for every router, switch or host present in the network. In every script there are commands for pure Linux software part to update their machines and also the creation of interfaces and their power on. Exept for the Switch one, the interfaces have also an IP address to get them reachable through the network.
