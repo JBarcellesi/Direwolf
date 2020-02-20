@@ -585,7 +585,14 @@ vagrant@router-1:~$ ip add show
        valid_lft forever preferred_lft forever
 ```
 #### Docker Container
-
+Once the script for host-c is launched, it is possible to check if the docker container has been set up correctly:
+```
+vagrant@host-c:~$ sudo docker ps
+CONTAINER ID        IMAGE                  COMMAND                  CREATED
+STATUS              PORTS                         NAMES
+44635fe7a158        dustnic82/nginx-test   "nginx -g 'daemon of…"   5 minutes ago
+Up 5 minutes        0.0.0.0:80->80/tcp, 443/tcp   Liz
+```
 ### Results
 ### Examples of Bad Configuration
 
