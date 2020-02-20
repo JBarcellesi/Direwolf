@@ -137,7 +137,6 @@ The assignment deliverable consists of a Github repository containing:
     * [Router with VLAN](Router-with-VLAN)
     * [Docker Container](Docker-Container)
 4. [Results](#Results)
-5. [Examples of Bad Configuration](#Examples-of-Bad-Configuration)
 
 
 ### Technical Configuration
@@ -502,6 +501,28 @@ vagrant@switch:~$ sudo ovs-appctl fdb/show switch
     2    10  08:00:27:2c:7b:82  234
     3     8  08:00:27:30:fc:87  229
 ```
+Another control to do is by the command
+```
+vagrant@switch:~$ sudo ovs-vsctl show
+```
+that shows ports, tags and interfaces in switch:
+```
+f3fe5cd6-2aec-437d-86a7-d684ac8d03ed
+    Bridge switch
+        Port "enp0s10"
+            tag: 8
+            Interface "enp0s10"
+        Port switch
+            Interface switch
+                type: internal
+        Port "enp0s8"
+            trunks: [8, 10]
+            Interface "enp0s8"
+        Port "enp0s9"
+            tag: 10
+            Interface "enp0s9"
+    ovs_version: "2.9.5"
+```
 
 #### Router with VLAN
 Besides the configuration of interfaces and IP addresses already explained, routers need an important instruction that allows to reach those subnets not directly linked to them. In this case, S1 and S2 for router-2 and S3 for router-1. Analyzing router-1 case, with the command
@@ -594,195 +615,6 @@ STATUS              PORTS                         NAMES
 Up 5 minutes        0.0.0.0:80->80/tcp, 443/tcp   Liz
 ```
 ### Results
-### Examples of Bad Configuration
-
-I modified the Vagrant file, every virtual machine now has its own script based on what kind of device is running. So it recalls 6 bash files with the commands for every router, switch or host present in the network. In every script there are commands for pure Linux software part to update their machines and also the creation of interfaces and their power on. Exept for the Switch one, the interfaces have also an IP address to get them reachable through the network.
-Here I paste an example of it from Host-b script:
-        sudo ip addr add 190.0.2.22/23 dev enp0s8
-        sudo ip link set enp0s8 up
-
-In particular, the hosts' scripts contain just those commands and one more (execpt for the host-c one, but I will talk about it later): the command that sets the default gateway. That is done to force hosts to send packets directly to the router of their competence (or through the switch), instead of going through the management interface, that uses the system IP address. An example is in Host-a script:
-        sudo ip route add default via 190.0.0.24 
-
-For what concerns Host-c, the only difference is that this one has to contain a Docker container that runs a ngnix web server on it, as told by the assignment. To manage this, more commands are necessary to install the proper tools and software and then the one to run the service:
-        sudo docker run --name Liz -p 80:80 -d dustnic82/nginx-test
-
-Talking about routers, two more commands are necessary: the first one is put to make the device as a real router allowing to route packets:
-        sudo sysctl net.ipv4.ip_forward=1
-The second is done to put a static route between the two routers, so that they know where to forward incoming packets:
-        sudo ip route add 191.0.0.0/25 via 193.0.0.2 dev enp0s9 (for Router-1 to reach S3)
-        sudo ip route add 190.0.0.0/22 via 193.0.0.1 dev enp0s9 (for Router-2 to reach S1 and S2)
-
-Note that the command in Router-2 script is just one because I put a bigger net's destination which includes S1 and S2 since 190.0.0.0/22 goes from 190.0.0.0 to 190.0.2.255.
-
-In the end the Switch. It is a level 2 device, so it does not need IP address. However it needs first of all to be set as a switch:
-        sudo ovs-vsctl add-br switch
-And then the two interfaces towards Host-a and Host-b must be developed as VLAN interfaces and the one towards Router-1 has to be put as a trunk one, so that it can allow the passage of packets incoming and outcoming:
-        ovs-vsctl set port enp0s9 tag=10
-        ovs-vsctl set port enp0s10 tag=8
-        ovs-vsctl set port enp0s8 trunks=8,10
-
-
-Here I report experimental reports.
-
-PINGS:
-Host-a -> Host-b
-        vagrant@host-a:~$ ping 190.0.2.22
-        PING 190.0.2.22 (190.0.2.22) 56(84) bytes of data.
-        64 bytes from 190.0.2.22: icmp_seq=1 ttl=63 time=2.22 ms
-
-Host-a -> Router-1 (internal interface S1)
-        vagrant@host-a:~$ ping 190.0.0.24
-        PING 190.0.0.24 (190.0.0.24) 56(84) bytes of data.
-        64 bytes from 190.0.0.24: icmp_seq=1 ttl=64 time=0.720 ms
-
-Host-a -> Router-1 (internal interface S2)
-        vagrant@host-a:~$ ping 190.0.2.21
-        PING 190.0.2.21 (190.0.2.21) 56(84) bytes of data.
-        64 bytes from 190.0.2.21: icmp_seq=1 ttl=64 time=0.926 ms
-
-Host-a -> Router-1 (external interface)
-        vagrant@host-a:~$ ping 193.0.0.1
-        PING 193.0.0.1 (193.0.0.1) 56(84) bytes of data.
-        64 bytes from 193.0.0.1: icmp_seq=1 ttl=64 time=0.954 ms
-
-Host-a -> Router-2 (external interface)
-        vagrant@host-a:~$ ping 193.0.0.2
-        PING 193.0.0.2 (193.0.0.2) 56(84) bytes of data.
-        64 bytes from 193.0.0.2: icmp_seq=1 ttl=63 time=1.38 ms
-
-Host-a -> Router-2 (internal interface)
-        vagrant@host-a:~$ ping 191.0.0.11
-        PING 191.0.0.11 (191.0.0.11) 56(84) bytes of data.
-        64 bytes from 191.0.0.11: icmp_seq=1 ttl=63 time=1.10 ms
-
-Host-a -> Host-c 
-        vagrant@host-a:~$ ping 191.0.0.10
-        PING 191.0.0.10 (191.0.0.10) 56(84) bytes of data.
-        64 bytes from 191.0.0.10: icmp_seq=1 ttl=62 time=1.85 ms
-
-Host-b -> Host-a
-        vagrant@host-b:~$ ping 190.0.0.25
-        PING 190.0.0.25 (190.0.0.25) 56(84) bytes of data.
-        64 bytes from 190.0.0.25: icmp_seq=1 ttl=63 time=1.63 ms
-
-Host-c -> Router-2 (internal interface)
-        vagrant@host-c:~$ ping 191.0.0.11
-        PING 191.0.0.11 (191.0.0.11) 56(84) bytes of data.
-        64 bytes from 191.0.0.11: icmp_seq=1 ttl=64 time=0.387 ms
-
-Host-c -> Router-2 (external interface)
-        vagrant@host-c:~$ ping 193.0.0.2
-        PING 193.0.0.2 (193.0.0.2) 56(84) bytes of data.
-        64 bytes from 193.0.0.2: icmp_seq=1 ttl=64 time=0.373 ms
-
-Host-c -> Router-1 (external interface)
-        vagrant@host-c:~$ ping 193.0.0.1
-        PING 193.0.0.1 (193.0.0.1) 56(84) bytes of data.
-        64 bytes from 193.0.0.1: icmp_seq=1 ttl=63 time=0.723 ms
-
-Host-c -> Router-1 (internal interface S1)
-        vagrant@host-c:~$ ping 190.0.0.24
-        PING 190.0.0.24 (190.0.0.24) 56(84) bytes of data.
-        64 bytes from 190.0.0.24: icmp_seq=1 ttl=63 time=0.724 ms
-
-Host-c -> Router-1 (internal interface S2)
-        vagrant@host-c:~$ ping 190.0.2.21
-        PING 190.0.2.21 (190.0.2.21) 56(84) bytes of data.
-        64 bytes from 190.0.2.21: icmp_seq=1 ttl=63 time=0.805 ms
-
-Host-c -> Host-a
-        vagrant@host-c:~$ ping 190.0.0.25
-        PING 190.0.0.25 (190.0.0.25) 56(84) bytes of data.
-        64 bytes from 190.0.0.25: icmp_seq=1 ttl=62 time=1.53 ms
-
-Host-c -> Host-b
-        vagrant@host-c:~$ ping 190.0.2.22
-        PING 190.0.2.22 (190.0.2.22) 56(84) bytes of data.
-        64 bytes from 190.0.2.22: icmp_seq=1 ttl=62 time=1.43 ms
-
-Router-1 -> Router-2 (external interface)
-        vagrant@router-1:~$ ping 193.0.0.2
-        PING 193.0.0.2 (193.0.0.2) 56(84) bytes of data.
-        64 bytes from 193.0.0.2: icmp_seq=1 ttl=64 time=0.240 ms
-
-Router-1 -> Router-2 (internal interface)
-        vagrant@router-1:~$ ping 191.0.0.11
-        PING 191.0.0.11 (191.0.0.11) 56(84) bytes of data.
-        64 bytes from 191.0.0.11: icmp_seq=1 ttl=64 time=0.419 ms
-
-Router-2 -> Router-1 (external interface)
-        vagrant@router-2:~$ ping 193.0.0.1
-        PING 193.0.0.1 (193.0.0.1) 56(84) bytes of data.
-        64 bytes from 193.0.0.1: icmp_seq=1 ttl=64 time=0.348 ms
-
-Router-2 -> Router-1 (internal interface S1)
-        vagrant@router-2:~$ ping 190.0.0.24
-        PING 190.0.0.24 (190.0.0.24) 56(84) bytes of data.
-        64 bytes from 190.0.0.24: icmp_seq=1 ttl=64 time=0.445 ms
-
-Router-2 -> Router-1 (internal interface S2)
-        vagrant@router-2:~$ ping 190.0.2.21
-        PING 190.0.2.21 (190.0.2.21) 56(84) bytes of data.
-        64 bytes from 190.0.2.21: icmp_seq=1 ttl=64 time=0.251 ms
-
-I do not put all others pings because the route used are the same shown above
-
-DOCKER:
-Host-a -> Host-c
-        vagrant@host-a:~$ curl 191.0.0.10:80
-        <!DOCTYPE html>
-        <html>
-        <head>
-        <title>Welcome to nginx!</title>
-        <style>
-        body {
-                width: 35em;
-                margin: 0 auto;
-                font-family: Tahoma, Verdana, Arial, sans-serif;
-        }
-        </style>
-        </head>
-        <body>
-        <h1>Welcome to nginx!</h1>
-        <p>If you see this page, the nginx web server is successfully installed and
-        working. Further configuration is required.</p>
-
-        <p>For online documentation and support please refer to
-        <a href="http://nginx.org/">nginx.org</a>.<br/>
-        Commercial support is available at
-        <a href="http://nginx.com/">nginx.com</a>.</p>
-
-        <p><em>Thank you for using nginx.</em></p>
-        </body>
-        </html>
-
-Host-b -> Host-c
-        vagrant@host-b:~$ curl 191.0.0.10:80
-        <!DOCTYPE html>
-        <html>
-        <head>
-        <title>Welcome to nginx!</title>
-        <style>
-        body {
-                width: 35em;
-                margin: 0 auto;
-                font-family: Tahoma, Verdana, Arial, sans-serif;
-        }
-        </style>
-        </head>
-        <body>
-        <h1>Welcome to nginx!</h1>
-        <p>If you see this page, the nginx web server is successfully installed and
-        working. Further configuration is required.</p>
-
-        <p>For online documentation and support please refer to
-        <a href="http://nginx.org/">nginx.org</a>.<br/>
-        Commercial support is available at
-        <a href="http://nginx.com/">nginx.com</a>.</p>
-
-        <p><em>Thank you for using nginx.</em></p>
-        </body>
-        </html>
-
+Now that every feature of the network has been checked and everything is fine, it is time to check is devices can communicate each other and if the docker container does its job.
+For the first 
 
