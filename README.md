@@ -341,6 +341,7 @@ sudo ovs-vsctl add-port switch enp0s10 tag=8
 sudo ip link set enp0s8 up
 sudo ip link set enp0s9 up
 sudo ip link set enp0s10 up
+ovs-vsctl set port enp0s8 trunks=8,10
 ```
 #### Host-a
 ```
@@ -616,5 +617,69 @@ Up 5 minutes        0.0.0.0:80->80/tcp, 443/tcp   Liz
 ```
 ### Results
 Now that every feature of the network has been checked and everything is fine, it is time to check is devices can communicate each other and if the docker container does its job.
-For the first 
+For the first opration, a ping is enough. In the network, every possible ping from and to every interface works but for facilitate reading, only two are reported, one from host-a to host-c and one from router-2 to host-b:
+```
+vagrant@host-a:~$ ping 191.0.0.10
+PING 191.0.0.10 (191.0.0.10) 56(84) bytes of data.
+64 bytes from 191.0.0.10: icmp_seq=1 ttl=62 time=1.83 ms
+64 bytes from 191.0.0.10: icmp_seq=2 ttl=62 time=1.63 ms
+64 bytes from 191.0.0.10: icmp_seq=3 ttl=62 time=1.81 ms
+64 bytes from 191.0.0.10: icmp_seq=4 ttl=62 time=1.53 ms
+64 bytes from 191.0.0.10: icmp_seq=5 ttl=62 time=1.45 ms
+64 bytes from 191.0.0.10: icmp_seq=6 ttl=62 time=1.57 ms
+64 bytes from 191.0.0.10: icmp_seq=7 ttl=62 time=1.47 ms
+64 bytes from 191.0.0.10: icmp_seq=8 ttl=62 time=1.64 ms
+--- 191.0.0.10 ping statistics ---
+8 packets transmitted, 8 received, 0% packet loss, time 7018ms
+rtt min/avg/max/mdev = 1.454/1.621/1.837/0.144 ms
+```
+```
+vagrant@router-2:~$ ping 190.0.2.22
+PING 190.0.2.22 (190.0.2.22) 56(84) bytes of data.
+64 bytes from 190.0.2.22: icmp_seq=1 ttl=63 time=1.37 ms
+64 bytes from 190.0.2.22: icmp_seq=2 ttl=63 time=1.05 ms
+64 bytes from 190.0.2.22: icmp_seq=3 ttl=63 time=1.24 ms
+64 bytes from 190.0.2.22: icmp_seq=4 ttl=63 time=1.27 ms
+64 bytes from 190.0.2.22: icmp_seq=5 ttl=63 time=1.09 ms
+64 bytes from 190.0.2.22: icmp_seq=6 ttl=63 time=1.15 ms
+64 bytes from 190.0.2.22: icmp_seq=7 ttl=63 time=1.13 ms
+64 bytes from 190.0.2.22: icmp_seq=8 ttl=63 time=1.08 ms
+--- 190.0.2.22 ping statistics ---
+8 packets transmitted, 8 received, 0% packet loss, time 7013ms
+rtt min/avg/max/mdev = 1.056/1.177/1.374/0.111 ms
+```
+
+In the end, to test if the Docker container works properly is necessary this command that asks the server to download an internet page (tried from host-b):
+```
+vagrant@host-b:~$ curl 191.0.0.10
+```
+that provides this output:
+```
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+    body {
+        width: 35em;
+        margin: 0 auto;
+        font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+```
+which is a sign that everything works.
 
