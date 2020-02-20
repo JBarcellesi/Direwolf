@@ -135,6 +135,7 @@ The assignment deliverable consists of a Github repository containing:
     * [Traditional host](#Traditional-host)
     * [Switch with VLAN](Switch-with-VLAN)
     * [Router with VLAN](Router-with-VLAN)
+    * [Docker Container](Docker-Container)
 4. [Results](#Results)
 5. [Examples of Bad Configuration](#Examples-of-Bad-Configuration)
 
@@ -328,19 +329,12 @@ apt-get install -y openvswitch-common openvswitch-switch apt-transport-https ca-
 
 #Configuration of switch ports
 sudo ovs-vsctl add-br switch                    #made the device as a bridge called "switch"                  
-sudo ovs-vsctl add-port switch enp0s8                     
-sudo ovs-vsctl add-port switch enp0s9
-sudo ovs-vsctl add-port switch enp0s10
+sudo ovs-vsctl add-port switch enp0s8
+sudo ovs-vsctl add-port switch enp0s9 tag=10
+sudo ovs-vsctl add-port switch enp0s10 tag=8
 sudo ip link set enp0s8 up
 sudo ip link set enp0s9 up
 sudo ip link set enp0s10 up
-
-#Configuration of VLANs
-sudo su                                         #command to enter in supervisor modality
-ovs-vsctl set port enp0s9 tag=10                #set the tag of VLAN on S1
-ovs-vsctl set port enp0s10 tag=8                #set the tag of VLAN on S2
-ovs-vsctl set port enp0s8 trunks=8,10           #set the port towards router-1 as trunk one
-exit                                            #end of supervisor modality
 ```
 #### Host-a
 ```
@@ -472,6 +466,35 @@ default via 190.0.0.24 dev enp0s8
 <b> NOTE: </b> the operation of assigning IP addresses and switching on interfaces has to be done for every device and on every interface of interest (exept for switch that does not have an IP address)
 
 #### Switch with VLAN
+The most important thing to do with the switch, in order to comply assignement's requests, is to set properly VLANs. Before do that, it is essential to make the device as a switch. This is done with the command
+```
+vagrant@switch:~$ sudo ovs-vsctl add-br switch
+```
+but does not inserts ports, in fact is possible to check it typing
+```
+vagrant@switch:~$ sudo ovs-vsctl list-ports switch
+vagrant@switch:~$
+```
+as it is possible to see, there is no output. This means that actually there are not ports yet.
+To add them, it is necessary a command that adds the port on a specify interface and, in the same time, sets the tag for the VLAN. Below it is reported just the example related to the port towards host-a and its power on.
+```
+vagrant@switch:~$ sudo ovs-vsctl add-port switch enp0s9 tag=10
+vagrant@switch:~$ sudo ip link set enp0s9 up
+```
+Repeating this action for the interface towards host-b, and powering on the interface towards router-1 completes the configuration of the switch. Now, with the command used before, it is possible to see first of all the presence of ports in the switch:
+```
+vagrant@switch:~$ sudo ovs-vsctl list-ports switch
+enp0s10
+enp0s8
+enp0s9
+```
+but mostly, using another command, it is pobbile to see the presence of VLANs in the switch, and so in the network:
+```
+vagrant@switch:~$ sudo ovs-appctl fdb/show switch
+ port  VLAN  MAC                Age
+    2    10  08:00:27:2c:7b:82  234
+    3     8  08:00:27:30:fc:87  229
+```
 
 #### Router with VLAN
 Besides the configuration of interfaces and IP addresses already explained, routers need an important instruction that allows to reach those subnets not directly linked to them. In this case, S1 and S2 for router-2 and S3 for router-1. Analyzing router-1 case, with the command
@@ -554,8 +577,7 @@ vagrant@router-1:~$ ip add show
     inet6 fe80::a00:27ff:fef6:d305/64 scope link
        valid_lft forever preferred_lft forever
 ```
-
-
+#### Docker Container
 
 ### Results
 ### Examples of Bad Configuration
