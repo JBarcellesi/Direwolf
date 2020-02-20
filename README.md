@@ -152,6 +152,13 @@ To implement the assignement, four subents are needed, one for each host linked 
 
 **4**) S4 is the last subnet in the project but is the most important, because it links ruoter-1 and router-2 and, without it, is not possible to send packets from host-a or host-b to host-c and viceversa. Since the subnet has just to provide a connection between routers, 2 bits are enough for hosts IP addresses (2 hosts that are routers, one address for broadcast service and one for the network). The netmask is 255.255.255.252 and the subnet IP adress is 193.0.0.0/30.
 
+| Subnet | Address      | Netmask         | Required size (hosts) | Maximum size (hosts) |
+| ------ | ------------ | --------------- | --------------------- | -------------------- |
+| S1     | 190.0.0.0/24 | 255.255.255.0   |  145                  |  256                 |
+| S2     | 190.0.2.0/23 | 255.255.254.0   |  401                  |  512                 |
+| S3     | 191.0.0.0/25 | 255.255.255.128 |  79                   |  128                 |
+| S4     | 193.0.0.0/30 | 255.255.255.252 |   2                   |   2                  |
+
 #### VLAN
 As required in the assignement, the traffic from and to host-a has to be indipendent of traffic from and to host-b. To allow this operation, VLANs are needed, one for S1 and one for S2. For S1-VLAN the identification tag is 10 and for S2-VLAN is 8. To implement the VLANs, it is necessary "to split" the interface from router-1 towards the switch that provides virtual networks, adding the indentification VLAN tag at the router interface.
 
