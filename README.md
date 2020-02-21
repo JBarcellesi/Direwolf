@@ -234,7 +234,7 @@ In order to make the project work, an ad-hoc script has to be written for each d
 
 It is necessary for every device to turn on interfaces in order to allow traffic to pass, to give IP addresses for every interface (execpt for the switch that works at level 2 in the ISO/OSI stack, so it does not have an IP address since it is only for level 3 of ISO/OSI stack devices). In addiction, those VMs that act as routers need a command to allow them to route packet becoming worthy of being named "router". Then every host needs a command to ensure them a default gateway and every gateway needs a command that builds a static route (since dynamic routing is not allowed in the project) to reach those subnets that are linked to the other gateway present in the network. To reduce the number of commands required, only one instruction has been written in router-2 merging together network IP addresses of S1 and S2.
 
-Special commands are required for host-c because it has to run a nginx web server. This is one of the two differences between host-c and the others hosts. The other is that host-a and host-b are connected to the same router (router-1), but they interface with a switch that keeps them on two different VLANs. Hence, in this part of the network there is the need to configure a "trunk" port from switch towards router-1 that can keep to it the traffic from host-a and host-b keeping them on two differents VLANs. In response, router-1 has to have the interface towards the swtich splitted, one part with the tag of host-a VLAN and IP compatible with the host-a subnet,and one part with same things but related to host-b. In script of router-1 and switch, commands to do these operations have a comment to highlight them. 
+Special commands are required for host-c because it has to run a nginx web server. This is one of the two differences between host-c and the others hosts. The other is that host-a and host-b are connected to the same router (router-1), but they interface with a switch that keeps them on two different VLANs. Hence, router-1 has to have the interface towards the swtich splitted, one part with the tag of host-a VLAN and IP compatible with the host-a subnet,and one part with same things but related to host-b. In script of router-1 and switch, commands to do these operations have a comment to highlight them. 
 
 #### Vagrantfile
 Throrugh the Vagrantfile, the network is build instantiating devices as virtual machines. Here is an example of how this file creates VM setting a name (router-2), the interfaces on that device, the script from which the device takes its features when the network is up (router-2.sh) and the RAM allocated for the machine (256MB).
@@ -541,7 +541,7 @@ default via 10.0.2.2 dev enp0s3 proto dhcp src 10.0.2.15 metric 100
 190.0.2.0/23 dev enp0s8.8 proto kernel scope link src 190.0.2.21
 193.0.0.0/30 dev enp0s9 proto kernel scope link src 193.0.0.1
 ```
-But using the command that establishes the static route to reach S3, that is
+But using the command that establishes a static route to reach S3, that is
 ```
 vagrant@router-1:~$ sudo ip route add 191.0.0.0/25 via 193.0.0.2 dev enp0s9
 ```
@@ -560,7 +560,7 @@ In the project, an unique instruction has been used to set the static route for 
 ```
 sudo ip route add 190.0.0.0/22 via 193.0.0.1 dev enp0s9
 ```
-This is possible because the network 190.0.0.0/22 has 10 bits for host addressing that menas a range of addresses that goes from 190.0.0.0 to 190.0.3.255 that includes S1 (190.0.0.0/24) and S2 (190.0.2.0/23).
+This is possible because the network 190.0.0.0/22 has 10 bits for host addressing that means a range of addresses that goes from 190.0.0.0 to 190.0.3.255 that includes S1 (190.0.0.0/24) and S2 (190.0.2.0/23).
 
 Other imporant things to set up on router-1 are interfaces towards host-a and host-b, so towards switch. Since the switch provides two different VLANs but router-1 has just one interface for switch, there is the need of a solution. The solution is to split the interface by VLANs' tags: this tags must be added at the interface's name. Once this is done, the interface with the tag "10" will hadle just the traffic coming from VLAN "10", and the same will do the interface with tag "8" with the traffic from the correspective interface.
 Commands above descripted are:
@@ -616,8 +616,8 @@ STATUS              PORTS                         NAMES
 Up 5 minutes        0.0.0.0:80->80/tcp, 443/tcp   Liz
 ```
 ### Results
-Now that every feature of the network has been checked and everything is fine, it is time to check is devices can communicate each other and if the docker container does its job.
-For the first opration, a ping is enough. In the network, every possible ping from and to every interface works but for facilitate reading, only two are reported, one from host-a to host-c and one from router-2 to host-b:
+Now that every feature of the network has been checked and everything is fine, it is time to check if devices can communicate each other and if the docker container does its job.
+For the first opration, a ping is enough. In the network, every possible ping from and to every interface works, but for facilitate reading, only two are reported, one from host-a to host-c and one from router-2 to host-b:
 ```
 vagrant@host-a:~$ ping 191.0.0.10
 PING 191.0.0.10 (191.0.0.10) 56(84) bytes of data.
